@@ -7,12 +7,20 @@ app = FastAPI()
 env = TradeEnv()
 
 
+# ✅ Root endpoint (IMPORTANT for Hugging Face & validator)
+@app.get("/")
+def root():
+    return {"message": "Trade Decision Environment API is running"}
+
+
+# Reset environment
 @app.post("/reset")
 def reset():
     obs = env.reset()
     return obs.model_dump()
 
 
+# Step function
 @app.post("/step")
 def step(action: dict):
     act = Action(**action)
@@ -26,6 +34,7 @@ def step(action: dict):
     }
 
 
+# State endpoint
 @app.get("/state")
 def state():
     return env.state()
