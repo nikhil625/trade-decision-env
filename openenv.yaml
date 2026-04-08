@@ -1,0 +1,36 @@
+name: trade-decision-env
+description: >
+  A real-world trading decision evaluation environment where an AI agent
+  evaluates trade proposals based on market conditions and risk factors.
+
+version: 1.0.0
+
+entry_point: env.environment:TradeEnv
+
+observation_space:
+  type: object
+  properties:
+    market:
+      type: object
+    proposal:
+      type: object
+    history:
+      type: array
+
+action_space:
+  type: object
+  properties:
+    decision:
+      type: string
+      enum: [APPROVE, REJECT, MODIFY]
+
+reward:
+  type: float
+  range: [0.0, 1.0]
+
+tasks:
+  count: 3
+  levels:
+    - easy
+    - medium
+    - hard
