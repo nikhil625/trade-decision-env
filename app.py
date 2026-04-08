@@ -7,7 +7,7 @@ app = FastAPI()
 env = TradeEnv()
 
 
-# ✅ Root endpoint (IMPORTANT for Hugging Face & validator)
+#  Root endpoint (IMPORTANT for Hugging Face & validator)
 @app.get("/")
 def root():
     return {"message": "Trade Decision Environment API is running"}
