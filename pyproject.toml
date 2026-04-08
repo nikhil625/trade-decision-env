@@ -1,0 +1,17 @@
+[project]
+name = "trade-decision-env"
+version = "0.1.0"
+description = "OpenEnv trading decision evaluation environment"
+authors = [
+    { name = "Nikhil" }
+]
+requires-python = ">=3.10"
+
+dependencies = [
+    "pydantic",
+    "fastapi",
+    "uvicorn"
+]
+
+[tool.openenv]
+entry_point = "env.environment:TradeEnv"
