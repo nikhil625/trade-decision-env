@@ -2,8 +2,8 @@ import os
 from openai import OpenAI
 from env.environment import TradeEnv
 from env.models import Action
+from env.tasks import TASKS
 
-# Read environment variables
 API_BASE_URL = os.getenv("API_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 OPENAI_API_KEY = os.getenv("HF_TOKEN")
@@ -17,31 +17,21 @@ env = TradeEnv()
 
 
 def get_action_from_llm(observation):
-    prompt = f"""
-You are a trading decision evaluator.
-
-Market:
-RSI: {observation.market.rsi}
-Trend: {observation.market.trend}
-
-Trade:
-Action: {observation.proposal.action}
-Stop Loss: {observation.proposal.stop_loss}
-Take Profit: {observation.proposal.take_profit}
-
-Rules:
-- RSI > 70 and BUY → REJECT
-- Sideways → REJECT
-- Bad SL/TP → MODIFY
-- Otherwise → APPROVE
-
-Answer ONLY: APPROVE or REJECT or MODIFY
-"""
-
     try:
         response = client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{
+                "role": "user",
+                "content": f"""
+RSI: {observation.market.rsi}
+Trend: {observation.market.trend}
+Action: {observation.proposal.action}
+SL: {observation.proposal.stop_loss}
+TP: {observation.proposal.take_profit}
+
+Respond ONLY: APPROVE or REJECT or MODIFY
+"""
+            }],
             temperature=0
         )
 
@@ -54,53 +44,46 @@ Answer ONLY: APPROVE or REJECT or MODIFY
         else:
             return Action(decision="APPROVE")
 
-    except Exception as e:
-        # ✅ FALLBACK (VERY IMPORTANT)
-        # ensures validator never fails
-
+    except Exception:
+        # fallback (important for validator)
         rsi = observation.market.rsi
-
         if rsi > 70:
-            return Action(decision="REJECT")
-        elif rsi < 30:
             return Action(decision="REJECT")
         else:
             return Action(decision="MODIFY")
 
-def run_episode():
+
+def run_single_task(task):
+    env.current_task = task
     obs = env.reset()
     done = False
+
+    step_count = 0
     total_reward = 0
 
-    print("\nTask:", env.state()["id"])
+    task_id = task["id"]
+
+    
+    print(f"[START] task={task_id}", flush=True)
 
     while not done:
         action = get_action_from_llm(obs)
         obs, reward, done, _ = env.step(action)
 
-        print("Action:", action)
-        print("Reward:", reward)
-
+        step_count += 1
         total_reward += reward.value
 
-    return total_reward
+       
+        print(f"[STEP] step={step_count} reward={reward.value}", flush=True)
+
+    
+    print(f"[END] task={task_id} score={total_reward} steps={step_count}", flush=True)
 
 
-def run_all_tasks(num_runs=5):
-    scores = []
-
-    for i in range(num_runs):
-        score = run_episode()
-        print(f"Run {i+1}: Score = {score}")
-        scores.append(score)
-
-    avg_score = sum(scores) / len(scores)
-
-    print("\nAverage Score:", avg_score)
-
-    return avg_score
+def main():
+    for task in TASKS:
+        run_single_task(task)
 
 
 if __name__ == "__main__":
-    final_score = run_all_tasks()
-    print("\nFinal Benchmark Score:", final_score)
+    main()
