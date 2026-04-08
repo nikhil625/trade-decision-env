@@ -2,9 +2,9 @@ def grade(action, task):
     correct = task["correct_decision"]
 
     if action.decision == correct:
-        return 1.0, "Correct decision"
+        return 0.9, "Correct decision"
 
     if action.decision == "MODIFY" and correct == "REJECT":
         return 0.5, "Partial credit"
 
-    return 0.0, "Incorrect decision"
+    return 0.1, "Incorrect decision"
